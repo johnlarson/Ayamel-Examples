@@ -28,10 +28,11 @@ var AnnotationTextEditor = (function(){
          * Text annotation
          */
         var manifest = new AnnotationManifest("text", {});
-        var transcriptPlayer;
+        var transcriptPlayer = null;
         var language = args.language;
         var activeAnnotation = null;
         var that = this;
+        var captionTracks = null;
 
         var annotator = new Ayamel.Annotator({
                 classList:["annotation"],
@@ -95,6 +96,15 @@ var AnnotationTextEditor = (function(){
             });
         }
 
+        function addTracks(tracks) {
+            if (typeof transcriptPlayer === 'undefined') {
+                return;
+            }
+            [].forEach.call(tracks, function(track) {
+                transcriptPlayer.addTrack(track.track)
+            });
+        }
+
         /*
          * Text display area
          */
@@ -116,19 +126,21 @@ var AnnotationTextEditor = (function(){
             renderAnnotations();
         } else {
             loadTracks(args.content, function(tracks) {
-                  transcriptPlayer = new TranscriptPlayer({
+                captionTracks = tracks
+                transcriptPlayer = new TranscriptPlayer({
                     holder: args.holder,
-                    captionTracks: tracks,
+                    captionTracks: [],
                     sync: false
                     /* filter: function(cue, $cue) {
                         setupTextAnnotations($cue);
                     } */
                 });
+                addTracks(captionTracks);
                 if (tracks.length > 0) {
                     // Sets the annotation language to the language of the first track.
-                    if (tracks[0].language !== "zxx") {
-                        args.ractive.data.selection.push(tracks[0].language);
-                        that.language = tracks[0].language;
+                    if (tracks[0].track.language !== "zxx") {
+                        args.ractive.data.selection.push(tracks[0].track.language);
+                        that.language = tracks[0].track.language;
                     }
                     else {
                         args.ractive.data.selection.push("eng");
@@ -137,29 +149,26 @@ var AnnotationTextEditor = (function(){
                 }
             });
             renderAnnotations = function() {
-                var currTranscript = !!transcriptPlayer ? transcriptPlayer.activeTranscript : 0;
-                loadTracks(args.content, function(tracks) {
-                    transcriptPlayer = new TranscriptPlayer({
-                        holder: args.holder,
-                        captionTracks: tracks,
-                        sync: false
-                    });
-                    annotator.annotations = manifest;
-                    [].forEach.call(tracks, function(track) {
-                        [].forEach.call(track.cues, function(cue) {
-                            var t = annotator.Text(cue.text);
-                            var z = document.createElement('p');
-                            z.appendChild(t);
-                            if (z.childNodes.length > 1) {
-                                cue.text = z.innerHTML;
-                            }
-                        });
-                        transcriptPlayer.updateTrack(track);
-                    });
-                    transcriptPlayer.activeTranscript = currTranscript;
-                    // annotator.js getmod temp fix
-                   setHandler();
+                var annArray = [{"glosses":{}, "mode":"showing"}];
+                Object.keys(manifest).forEach(function(key) {
+                    annArray[0].glosses[key] = manifest[key];
                 });
+                annotator.annotations = annArray;
+                var currTranscript = !!transcriptPlayer ? transcriptPlayer.activeTranscript : 0;
+                [].forEach.call(captionTracks, function(track) {
+                    [].forEach.call(track.track.cues, function(cue) {
+                        var t = annotator.Text(cue.text.replace(/<[^]*?>/gm, ''));
+                        var z = document.createElement('p');
+                        z.appendChild(t);
+                        if (z.childNodes.length > 1) {
+                            cue.text = z.innerHTML;
+                        }
+                    });
+                    transcriptPlayer.updateTrack(track.track);
+                });
+                transcriptPlayer.activeTranscript = currTranscript;
+                // annotator.js getmod temp fix
+                setHandler();
             }
             setupTextAnnotations(args.holder);
         }
