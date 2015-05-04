@@ -123,7 +123,7 @@ var AnnotationTextEditor = (function(){
                     });
                 });
             };
-            renderAnnotations();
+            renderAnnotations(false);
         } else {
             loadTracks(args.content, function(tracks) {
                 captionTracks = tracks
@@ -148,7 +148,8 @@ var AnnotationTextEditor = (function(){
                     }
                 }
             });
-            renderAnnotations = function() {
+            /** Takes Boolean variable that states whether or not an annotation was deleted **/
+            renderAnnotations = function(deleted) {
                 var annArray = [{"glosses":{}, "mode":"showing"}];
                 Object.keys(manifest).forEach(function(key) {
                     annArray[0].glosses[key] = manifest[key];
@@ -162,6 +163,8 @@ var AnnotationTextEditor = (function(){
                         z.appendChild(t);
                         if (z.childNodes.length > 1) {
                             cue.text = z.innerHTML;
+                        } else if (deleted === true) {
+                            cue.text = cue.text.replace(/<[^]*?>/gm, '');
                         }
                     });
                     transcriptPlayer.updateTrack(track.track);
@@ -178,11 +181,11 @@ var AnnotationTextEditor = (function(){
          */
         args.popupEditor.on("update", function() {
             activeAnnotation = args.popupEditor.annotation.currAnn;
-            renderAnnotations();
+            renderAnnotations(false);
         });
         args.popupEditor.on("delete", function() {
             delete manifest[language][activeAnnotation];
-            renderAnnotations();
+            renderAnnotations(true);
         });
 
 
@@ -243,7 +246,7 @@ var AnnotationTextEditor = (function(){
                             // saves annotations under the corresponding language
                             manifest[annLang][key] = annObj[key];
                         });
-                        renderAnnotations();
+                        renderAnnotations(false);
                     });
                     $("#editAnnotationsModal").modal("hide");
                 }
@@ -252,12 +255,12 @@ var AnnotationTextEditor = (function(){
                 value: function() {
                     manifest = {};
                     manifest[language] = {};
-                    renderAnnotations();
+                    renderAnnotations(true);
                 }
             },
             refreshTranscript: {
                 value: function() {
-                    renderAnnotations();
+                    renderAnnotations(false);
                 }
             }
         });
