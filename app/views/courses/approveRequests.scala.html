@@ -27,7 +27,7 @@
                                     <input type="hidden" name="reqid" value="@{addRequest.id.get}"/>
                                     <button class="btn btn-blue">Approve</button>
                                 </form>
-                                <form action="@@routes.Courses.denyRequest(course.id.get)" method="POST">
+                                <form action="@routes.Courses.denyRequest(course.id.get)" method="POST">
                                     <input type="hidden" name="reqid" value="@{addRequest.id.get}"/>
                                     <button class="btn btn-blue">Deny</button>
                                 </form>

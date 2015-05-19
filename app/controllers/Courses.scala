@@ -323,7 +323,7 @@ object Courses extends Controller {
                  req <- AddCourseRequest.findById(id.toLong);
                  if req.courseId == courseId
             ) { req.approve() }
-            Ok
+            Redirect(routes.Courses.approvePage(courseId))
         } else
             Errors.forbidden
   }
@@ -340,7 +340,7 @@ object Courses extends Controller {
                  req <- AddCourseRequest.findById(id.toLong);
                  if req.courseId == courseId
             ) { req.deny() }
-            Ok
+            Redirect(routes.Courses.approvePage(courseId))
         } else
             Errors.forbidden
   }
